@@ -93,7 +93,7 @@
 
 
     // Get the data
-    d3.csv("https://www.dropbox.com/s/kmg5ke3g4bpnnce/data2b.csv?dl=1", function(error, data) {
+    d3.csv("data2b.csv", function(error, data) {
       data.forEach(function(d) {
         d.date = parseDate(d.date);
         d.gold = +d.gold;
@@ -154,7 +154,7 @@
       svg.select("#sp500line").remove();
 
       // Get the data again
-      d3.csv("https://www.dropbox.com/s/isz3dpeecfcs9fz/data2c.csv?dl=1", function(error, data) {
+      d3.csv("data2c.csv", function(error, data) {
         data.forEach(function(d) {
           d.date = parseDate(d.date);
           d.stocksgold = +d.stocksgold;
