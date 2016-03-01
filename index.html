@@ -1,226 +1,121 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-  body {
-    font: 12px Arial;
-  }
-  
-  path {
-    stroke: steelblue;
-    stroke-width: 2;
-    fill: none;
-  }
-  
-  .axis path,
-  .axis line {
-    fill: none;
-    stroke: grey;
-    stroke-width: 1;
-    shape-rendering: crispEdges;
-  }
+
+body {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
 
 </style>
-
 <body>
+<script src="d3.min.js"></script>
+<script>
 
-  <div id="option">
-    <input name="updateButton" type="button" value="Update" onclick="updateData()" />
+var margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
 
-  </div>
+var formatDate = d3.time.format("%d-%b-%y");
 
-  <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+var x = d3.time.scale()
+    .range([0, width]);
 
+var y = d3.scale.linear()
+    .range([height, 0]);
 
-  <script>
-    var margin = {
-        top: 30,
-        right: 80,
-        bottom: 30,
-        left: 50
-      },
-      width = 600 - margin.left - margin.right,
-      height = 270 - margin.top - margin.bottom;
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
 
-    var parseDate = d3.time.format("%d-%b-%y").parse;
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .ticks(5);
 
-    var x = d3.time.scale().range([0, width]);
-    var y = d3.scale.linear().range([height, 0]);
+var line1 = d3.svg.line()
+    .x(function(d) { return x(d.date); })
+    .y(function(d) { return y(d.Gold); });
 
-    var xAxis = d3.svg.axis().scale(x)
-      .orient("bottom").ticks(10);
+var line2 = d3.svg.line()
+    .x(function(d) { return x(d.date); })
+    .y(function(d) { return y(d.SP500); });
 
-    var yAxis = d3.svg.axis().scale(y)
-      .orient("left").ticks(10);
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    var valueline = d3.svg.line()
-      .x(function(d) {
-        return x(d.date);
-      })
-      .y(function(d) {
-        return y(d.gold);
-      });
+d3.csv("gold-stocks.csv", type, function(error, data) {
+  if (error) throw error;
 
-    var valueline2 = d3.svg.line()
-      .x(function(d) {
-        return x(d.date);
-      })
-      .y(function(d) {
-        return y(d.sp500);
-      });
+  x.domain(d3.extent(data, function(d) { return d.date; }));
+  y.domain(d3.extent(data, function(d) { return Math.max(d.Gold, d.SP500); }));
 
-    var svg = d3.select("body")
-      .append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  svg.append("path")    // Add the Gold path.
+    .attr("class", "line")
+    .style("stroke", "steelblue")
+    .attr("d", line1(data));
 
-    var toggleColor = (function() {
-      var currentColor = "white";
+  svg.append("path")    // Add the S&P 500 path.
+    .attr("class", "line")
+    .style("stroke", "red")
+    .attr("d", line2(data));
 
-      return function() {
-        currentColor = currentColor == "silver" ? "white" : "silver";
-        d3.select(this).style("fill", currentColor);
-      }
-    })();
+  svg.append("g")     // Add the X Axis
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis);
 
-  
-    var invocation = new XMLHttpRequest();
-    var url1 = 'https://github.com/howardwen/Gold_Oil/blob/master/data2b.csv';
-    var url2 = 'https://github.com/howardwen/Gold_Oil/blob/master/data2c.csv';
-     
-    function callFirstDomain() {
-      if(invocation) {    
-        invocation.open('GET', url1, true);
-        invocation.onreadystatechange = handler;
-        invocation.send(); 
-      }
-    };
-    
-    function callSecondDomain() {
-      if(invocation) {    
-        invocation.open('GET', url2, true);
-        invocation.onreadystatechange = handler;
-        invocation.send(); 
-      }
-    };
-    
-    svg.append("rect")
-      .attr("id", "background")
-      .attr("width", "100%")
-      .attr("height", "100%")
-      .attr("fill", "silver")
-      .on("click", toggleColor);
+  svg.append("g")     // Add the Y Axis
+    .attr("class", "y axis")
+    .call(yAxis);
+
+  svg.append("text")
+    .attr("transform", "translate(" + (width+3) + "," + y(data[0].Gold) + ")")
+    .attr("dy", ".35em")
+    .attr("text-anchor", "start")
+    .style("fill", "red")
+    .text("Gold (USD/oz)");
+
+  svg.append("text")
+    .attr("transform", "translate(" + (width+3) + "," + y(data[0].SP500) + ")")
+    .attr("dy", ".35em")
+    .attr("text-anchor", "start")
+    .style("fill", "steelblue")
+    .text("S&P500 Index");
+
+console.log(data.length-1);
+console.log(data[data.length-1].Gold);
+console.log(data[0].Gold);
+console.log(y(data[0].Gold));
+console.log(y(data[0].SP500));
 
 
+});
 
-    // Get the data
-    d3.csv(callFirstDomain(), function(error, data) {
-      data.forEach(function(d) {
-        d.date = parseDate(d.date);
-        d.gold = +d.gold;
-        d.sp500 = +d.sp500;
-      });
+function type(d) {
+  d.date = formatDate.parse(d.date);
+  d.Gold = +d.Gold;
+  d.SP500 = +d.SP500;
+  return d;
+}
 
-      // Scale the range of the data
-      x.domain(d3.extent(data, function(d) {
-        return d.date;
-      }));
-      y.domain([0, d3.max(data, function(d) {
-        return Math.max(d.gold, d.sp500);
-      })]);
-
-      svg.append("path") // Add the valueline path.
-        .attr("class", "line")
-        .attr("d", valueline(data));
-
-      svg.append("path") // Add the valueline2 path.
-        .attr("class", "line")
-        .attr("id", "sp500line")
-        .style("stroke", "red")
-        .attr("d", valueline2(data));
-
-      svg.append("g") // Add the X Axis
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
-
-      svg.append("g") // Add the Y Axis
-        .attr("class", "y axis")
-        .call(yAxis);
-
-      svg.append("text")
-        .attr("transform", "translate(" + (width + 3) + "," + y(data[0].sp500) + ")")
-        .attr("id", "sp500")
-        .attr("dy", ".35em")
-        .attr("text-anchor", "start")
-        .style("fill", "red")
-        .text("S&P 500");
-
-      svg.append("text")
-        .attr("transform", "translate(" + (width + 3) + "," + y(data[0].gold) + ")")
-        .attr("id", "gold")
-        .attr("dy", ".35em")
-        .attr("text-anchor", "start")
-        .style("fill", "steelblue")
-        .text("Gold");
-
-
-    });
-
-    // ** Update data section (Called from the onclick)
-    function updateData() {
-
-      //svg.select("#gold").remove();
-      svg.select("#sp500").remove();
-      svg.select("#sp500line").remove();
-
-      // Get the data again
-      d3.csv(callSecondDomain(), function(error, data) {
-        data.forEach(function(d) {
-          d.date = parseDate(d.date);
-          d.stocksgold = +d.stocksgold;
-        });
-
-        // Scale the range of the data again 
-        x.domain(d3.extent(data, function(d) {
-          return d.date;
-        }));
-        y.domain([0, d3.max(data, function(d) {
-          return d.stocksgold;
-        })]);
-
-        // Select the section we want to apply our changes to
-        var svg = d3.select("body").transition();
-
-        var valueline2 = d3.svg.line()
-          .x(function(d) {
-            return x(d.date);
-          })
-          .y(function(d) {
-            return y(d.stocksgold);
-          });
-
-        // Make the changes
-        svg.select(".line") // change the line
-          .duration(750)
-          .attr("d", valueline2(data))
-          .ease("bounce");
-        svg.select(".x.axis") // change the x axis
-          .duration(750)
-          .call(xAxis);
-        svg.select(".y.axis") // change the y axis
-          .duration(750)
-          .call(yAxis);
-        svg.select("#background")
-          .duration(750)
-        svg.select("#gold")
-          .attr("transform", "translate(" + (width + 3) + "," + y(data[0].stocksgold) + ")")
-          .text("Stocks/Gold")
-
-      });
-
-    }
-
-  </script>
-</body>
+</script>
