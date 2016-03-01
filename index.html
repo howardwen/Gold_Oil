@@ -29,18 +29,7 @@
   </div>
 
   <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
-  
-  var invocation = new XMLHttpRequest();
-  var url1 = 'https://github.com/howardwen/Gold_Oil/blob/master/data2b.csv';
-  var url2 = 'https://github.com/howardwen/Gold_Oil/blob/master/data2c.csv';
-   
-  function callOtherDomain() {
-    if(invocation) {    
-      invocation.open('GET', url, true);
-      invocation.onreadystatechange = handler;
-      invocation.send(); 
-    }
-  }
+
 
   <script>
     var margin = {
@@ -95,6 +84,19 @@
       }
     })();
 
+  
+    var invocation = new XMLHttpRequest();
+    var url1 = 'https://github.com/howardwen/Gold_Oil/blob/master/data2b.csv';
+    var url2 = 'https://github.com/howardwen/Gold_Oil/blob/master/data2c.csv';
+     
+    function callOtherDomain() {
+      if(invocation) {    
+        invocation.open('GET', url, true);
+        invocation.onreadystatechange = handler;
+        invocation.send(); 
+      }
+    }
+    
     svg.append("rect")
       .attr("id", "background")
       .attr("width", "100%")
