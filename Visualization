@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  body {
+    font: 12px Arial;
+  }
+  
+  path {
+    stroke: steelblue;
+    stroke-width: 2;
+    fill: none;
+  }
+  
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: grey;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+  }
+
+</style>
+
+<body>
+
+  <div id="option">
+    <input name="updateButton" type="button" value="Update" onclick="updateData()" />
+
+  </div>
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+
+  <script>
+    var margin = {
+        top: 30,
+        right: 80,
+        bottom: 30,
+        left: 50
+      },
+      width = 600 - margin.left - margin.right,
+      height = 270 - margin.top - margin.bottom;
+
+    var parseDate = d3.time.format("%d-%b-%y").parse;
+
+    var x = d3.time.scale().range([0, width]);
+    var y = d3.scale.linear().range([height, 0]);
+
+    var xAxis = d3.svg.axis().scale(x)
+      .orient("bottom").ticks(10);
+
+    var yAxis = d3.svg.axis().scale(y)
+      .orient("left").ticks(10);
+
+    var valueline = d3.svg.line()
+      .x(function(d) {
+        return x(d.date);
+      })
+      .y(function(d) {
+        return y(d.gold);
+      });
+
+    var valueline2 = d3.svg.line()
+      .x(function(d) {
+        return x(d.date);
+      })
+      .y(function(d) {
+        return y(d.sp500);
+      });
+
+    var svg = d3.select("body")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var toggleColor = (function() {
+      var currentColor = "white";
+
+      return function() {
+        currentColor = currentColor == "silver" ? "white" : "silver";
+        d3.select(this).style("fill", currentColor);
+      }
+    })();
+
+    svg.append("rect")
+      .attr("id", "background")
+      .attr("width", "100%")
+      .attr("height", "100%")
+      .attr("fill", "silver")
+      .on("click", toggleColor);
+
+
+
+    // Get the data
+    d3.csv("https://www.dropbox.com/s/kmg5ke3g4bpnnce/data2b.csv?dl=1", function(error, data) {
+      data.forEach(function(d) {
+        d.date = parseDate(d.date);
+        d.gold = +d.gold;
+        d.sp500 = +d.sp500;
+      });
+
+      // Scale the range of the data
+      x.domain(d3.extent(data, function(d) {
+        return d.date;
+      }));
+      y.domain([0, d3.max(data, function(d) {
+        return Math.max(d.gold, d.sp500);
+      })]);
+
+      svg.append("path") // Add the valueline path.
+        .attr("class", "line")
+        .attr("d", valueline(data));
+
+      svg.append("path") // Add the valueline2 path.
+        .attr("class", "line")
+        .attr("id", "sp500line")
+        .style("stroke", "red")
+        .attr("d", valueline2(data));
+
+      svg.append("g") // Add the X Axis
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+
+      svg.append("g") // Add the Y Axis
+        .attr("class", "y axis")
+        .call(yAxis);
+
+      svg.append("text")
+        .attr("transform", "translate(" + (width + 3) + "," + y(data[0].sp500) + ")")
+        .attr("id", "sp500")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "red")
+        .text("S&P 500");
+
+      svg.append("text")
+        .attr("transform", "translate(" + (width + 3) + "," + y(data[0].gold) + ")")
+        .attr("id", "gold")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "steelblue")
+        .text("Gold");
+
+
+    });
+
+    // ** Update data section (Called from the onclick)
+    function updateData() {
+
+      //svg.select("#gold").remove();
+      svg.select("#sp500").remove();
+      svg.select("#sp500line").remove();
+
+      // Get the data again
+      d3.csv("https://www.dropbox.com/s/isz3dpeecfcs9fz/data2c.csv?dl=1", function(error, data) {
+        data.forEach(function(d) {
+          d.date = parseDate(d.date);
+          d.stocksgold = +d.stocksgold;
+        });
+
+        // Scale the range of the data again 
+        x.domain(d3.extent(data, function(d) {
+          return d.date;
+        }));
+        y.domain([0, d3.max(data, function(d) {
+          return d.stocksgold;
+        })]);
+
+        // Select the section we want to apply our changes to
+        var svg = d3.select("body").transition();
+
+        var valueline2 = d3.svg.line()
+          .x(function(d) {
+            return x(d.date);
+          })
+          .y(function(d) {
+            return y(d.stocksgold);
+          });
+
+        // Make the changes
+        svg.select(".line") // change the line
+          .duration(750)
+          .attr("d", valueline2(data))
+          .ease("bounce");
+        svg.select(".x.axis") // change the x axis
+          .duration(750)
+          .call(xAxis);
+        svg.select(".y.axis") // change the y axis
+          .duration(750)
+          .call(yAxis);
+        svg.select("#background")
+          .duration(750)
+        svg.select("#gold")
+          .attr("transform", "translate(" + (width + 3) + "," + y(data[0].stocksgold) + ")")
+          .text("Stocks/Gold")
+
+      });
+
+    }
+
+  </script>
+</body>
