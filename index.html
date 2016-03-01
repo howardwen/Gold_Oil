@@ -29,6 +29,18 @@
   </div>
 
   <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+  
+  var invocation = new XMLHttpRequest();
+  var url1 = 'https://github.com/howardwen/Gold_Oil/blob/master/data2b.csv';
+  var url2 = 'https://github.com/howardwen/Gold_Oil/blob/master/data2c.csv';
+   
+  function callOtherDomain() {
+    if(invocation) {    
+      invocation.open('GET', url, true);
+      invocation.onreadystatechange = handler;
+      invocation.send(); 
+    }
+  }
 
   <script>
     var margin = {
@@ -93,7 +105,7 @@
 
 
     // Get the data
-    d3.csv("data2b.csv", function(error, data) {
+    d3.csv(callOtherDomain(url1), function(error, data) {
       data.forEach(function(d) {
         d.date = parseDate(d.date);
         d.gold = +d.gold;
